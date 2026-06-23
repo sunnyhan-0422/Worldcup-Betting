@@ -251,7 +251,8 @@ import {
   getDatabase,
   ref,
   push,
-  onValue
+  onValue,
+  remove
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
  
 const firebaseConfig = {
@@ -282,15 +283,13 @@ function addP() {
     return;
   }
 
-  var sa = Math.max(
-    0,
-    Math.min(4, parseInt(document.getElementById('sa').value) || 0)
-  );
+var sa = parseInt(document.getElementById('sa').value) || 0;
+var ko = parseInt(document.getElementById('ko').value) || 0;
 
-  var ko = Math.max(
-    0,
-    Math.min(4, parseInt(document.getElementById('ko').value) || 0)
-  );
+if (sa < 0 || sa > 4 || ko < 0 || ko > 4) {
+  alert('점수는 0~4까지만 입력 가능합니다.');
+  return;
+}
 
   push(ref(db, "predictions"), {
     name: nm,
@@ -336,6 +335,28 @@ function goBack() {
   window.scrollTo(0, 0);
 }
 
+function resetAll() {
+
+  const pw = prompt("관리자 비밀번호를 입력하세요");
+
+  if (pw !== "2026") {
+    alert("비밀번호가 틀렸습니다.");
+    return;
+  }
+
+  if (!confirm("정말 모든 참가자를 삭제하시겠습니까?")) {
+    return;
+  }
+
+  remove(ref(db, "predictions"))
+    .then(() => {
+      alert("초기화 완료");
+    })
+    .catch((err) => {
+      alert("오류 발생: " + err.message);
+    });
+}
+ 
 function renderGrid() {
   var map = {};
   players.forEach(function(p, i) {
@@ -372,7 +393,7 @@ function countClick(e) {
   clickCount++;
   if (clickTimer) clearTimeout(clickTimer);
   clickTimer = setTimeout(function() { clickCount = 0; }, 3000);
-  if (clickCount >= 10) { clickCount = 0; goBack(); }
+  if (clickCount >= 10) { clickCount = 0; resetAll(); }
 }
 
 window.addP = addP;
