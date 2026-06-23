@@ -244,25 +244,82 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+
+import {
+  getDatabase,
+  ref,
+  push,
+  onValue
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+ 
+const firebaseConfig = {
+  apiKey: "AIzaSyBJEhklXXDr-62LlywdLEmYEc_dV3jtx2k",
+  authDomain: "worldcup-betting-f1917.firebaseapp.com",
+  databaseURL: "https://worldcup-betting-f1917-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "worldcup-betting-f1917",
+  storageBucket: "worldcup-betting-f1917.firebasestorage.app",
+  messagingSenderId: "1061763331709",
+  appId: "1:1061763331709:web:b6858f74d78677f6502314"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 var players = [];
 var COLORS = ['sticky-0','sticky-1','sticky-2','sticky-3','sticky-4','sticky-5'];
 
 function addP() {
   var nm = document.getElementById('nm').value.trim();
-  if (!nm) { alert('이름을 입력해주세요'); return; }
-  if (players.find(function(p){ return p.name === nm; })) { alert('같은 이름이 이미 있어요'); return; }
-  var sa = Math.max(0, Math.min(4, parseInt(document.getElementById('sa').value) || 0));
-  var ko = Math.max(0, Math.min(4, parseInt(document.getElementById('ko').value) || 0));
-  players.push({ name: nm, sa: sa, ko: ko });
+
+  if (!nm) {
+    alert('이름을 입력해주세요');
+    return;
+  }
+
+  if (players.find(function(p){ return p.name === nm; })) {
+    alert('같은 이름이 이미 있어요');
+    return;
+  }
+
+  var sa = Math.max(
+    0,
+    Math.min(4, parseInt(document.getElementById('sa').value) || 0)
+  );
+
+  var ko = Math.max(
+    0,
+    Math.min(4, parseInt(document.getElementById('ko').value) || 0)
+  );
+
+  push(ref(db, "predictions"), {
+    name: nm,
+    sa: sa,
+    ko: ko,
+    createdAt: Date.now()
+  });
+
   document.getElementById('nm').value = '';
   document.getElementById('sa').value = '0';
   document.getElementById('ko').value = '1';
   document.getElementById('nm').focus();
-  document.getElementById('cnt').textContent = players.length + '명 입력됨';
-  document.getElementById('btn-next').disabled = false;
 }
+ onValue(ref(db, "predictions"), (snapshot) => {
 
+  const data = snapshot.val() || {};
+
+  players = Object.values(data);
+
+  document.getElementById('cnt').textContent =
+    players.length + '명 입력됨';
+
+  document.getElementById('btn-next').disabled =
+    players.length === 0;
+
+  if (document.getElementById('s2').classList.contains('active')) {
+    renderGrid();
+  }
+});
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function goGrid() {
@@ -318,6 +375,11 @@ function countClick(e) {
   if (clickCount >= 10) { clickCount = 0; goBack(); }
 }
 
+window.addP = addP;
+window.goGrid = goGrid;
+window.goBack = goBack;
+window.countClick = countClick;
+ 
 document.getElementById('nm').addEventListener('keydown', function(e) { if (e.key === 'Enter') addP(); });
 </script>
 </body>
